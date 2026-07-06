@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0e08" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<title>Conferidor Quina · Bolão</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700;1,800&family=Space+Mono:wght@400;700&display=swap');
+  :root{
+    --bg:#0a0e08; --bg2:#0c1109; --card:#12180f; --card2:#161d11; --line:#2b3420;
+    --gold:#e8be3a; --gold2:#caa02f; --cream:#f4eeda; --txt:#e9e7db;
+    --muted:#8b917b; --blue:#6f9bd1; --red:#e0553f;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;font-family:'Space Mono',ui-monospace,'Courier New',monospace;
+    background:var(--bg);
+    background-image:radial-gradient(120% 80% at 50% -10%, #16240f 0%, var(--bg) 55%);
+    color:var(--txt);min-height:100vh;-webkit-tap-highlight-color:transparent}
+  header{padding:calc(12px + env(safe-area-inset-top)) 16px 4px;text-align:center}
+  header h1{margin:0;font-family:'Playfair Display',Georgia,serif;font-weight:800;font-size:1.4rem;color:var(--cream);letter-spacing:.5px}
+  header p{margin:5px 0 0;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:2.5px}
+  .wrap{max-width:620px;margin:0 auto;padding:0 12px calc(50px + env(safe-area-inset-bottom))}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:16px 14px;margin:14px 0;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+  .sec{display:flex;align-items:baseline;gap:10px;margin:26px 2px 8px;border-bottom:1px solid var(--line);padding-bottom:8px}
+  .sec .num{font-family:'Playfair Display',serif;font-weight:800;font-style:italic;font-size:1.7rem;color:var(--gold);line-height:1}
+  .sec h2{font-family:'Playfair Display',Georgia,serif;font-weight:700;font-size:1.25rem;color:var(--cream);margin:0;flex:1}
+  .sec .meta{font-size:.62rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap}
+  h3{font-family:'Playfair Display',Georgia,serif;font-weight:700;font-size:1rem;color:var(--cream);margin:0 0 2px}
+  label{display:block;font-size:.66rem;color:var(--muted);margin:10px 0 4px;text-transform:uppercase;letter-spacing:1.5px}
+  input{width:100%;padding:13px 14px;border-radius:8px;border:1px solid var(--line);
+    background:var(--bg2);color:var(--txt);font-size:1rem;font-family:inherit}
+  input[type=file]{padding:9px}
+  input:focus{outline:1px solid var(--gold)}
+  button{width:100%;padding:14px;border:0;border-radius:8px;font-size:.76rem;font-weight:700;
+    text-transform:uppercase;letter-spacing:2px;font-family:'Space Mono',monospace;
+    background:var(--gold);color:#231d07;margin-top:12px;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--muted);letter-spacing:1.5px}
+  button:disabled{opacity:.55}
+  .msg{margin-top:10px;font-size:.78rem;min-height:18px;word-break:break-word}
+  .msg.ok{color:var(--gold)} .msg.err{color:var(--red)}
+  .sub{color:var(--muted);font-size:.72rem;margin:4px 0 0;line-height:1.5}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:10px 0 2px}
+  .topbar .who{font-size:.68rem;color:var(--muted);letter-spacing:1px;overflow:hidden;text-overflow:ellipsis}
+  .topbar button{width:auto;padding:8px 14px;margin:0;font-size:.66rem}
+  .small{font-size:.62rem;color:var(--muted);text-align:center;margin-top:26px;letter-spacing:2px;text-transform:uppercase}
+  .hide{display:none!important}
+  .pill{font-size:.62rem;color:var(--muted);background:var(--bg2);padding:4px 10px;border-radius:99px;border:1px solid var(--line);text-transform:uppercase;letter-spacing:1px}
+
+  /* grid dezenas */
+  .grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-top:4px}
+  .cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:50%;
+    font-size:.68rem;color:var(--muted);background:var(--bg2);border:1px solid var(--line);
+    cursor:pointer;user-select:none}
+  .cell.on{background:radial-gradient(circle at 35% 28%, #f6db6a, var(--gold) 62%, var(--gold2));
+    color:#241d05;font-weight:700;border-color:transparent;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+  .cell.sim{background:var(--card2);border:1px dashed var(--gold);color:var(--gold);font-weight:700}
+  .gridbar{display:flex;gap:8px;align-items:center;margin-top:12px}
+  .gridbar button{margin:0;width:auto;flex:1;padding:10px;font-size:.64rem}
+
+  /* sorteios */
+  .draw{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:10px 12px;border-radius:8px;
+    background:var(--card2);margin:7px 0;border-left:3px solid var(--line)}
+  .draw .dt{color:var(--blue);font-style:italic;font-family:'Playfair Display',serif;font-weight:700;font-size:.95rem;margin-right:2px;white-space:nowrap}
+  .draw .pill{margin-left:auto}
+  .draw .del{width:30px;height:30px;padding:0;margin:0;border-radius:50%;background:transparent;
+    border:1px solid var(--line);color:var(--red);font-size:.8rem;flex:none;letter-spacing:0}
+  .ball{display:inline-flex;align-items:center;justify-content:center;width:29px;height:29px;border-radius:50%;
+    background:radial-gradient(circle at 35% 28%, #f6db6a, var(--gold) 62%, var(--gold2));
+    color:#241d05;font-weight:700;font-size:.72rem;box-shadow:0 2px 6px rgba(0,0,0,.45);flex:none}
+
+  /* card de jogo (estilo original) */
+  .jogo{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--gold);
+    border-radius:8px;padding:14px;margin:10px 0}
+  .jogo .l1{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .jogo .nm{font-family:'Playfair Display',serif;font-weight:800;font-size:1.02rem;color:var(--cream);letter-spacing:.5px;text-transform:uppercase}
+  .jogo .idx{font-size:.66rem;color:var(--muted)}
+  .jogo .l2{display:flex;justify-content:space-between;align-items:flex-end;margin:8px 0 4px}
+  .bigA{font-family:'Playfair Display',serif;font-weight:800;font-style:italic;font-size:2rem;color:var(--gold);line-height:1}
+  .bigA small{font-size:1.05rem;color:var(--muted);font-style:italic}
+  .bigF{font-family:'Playfair Display',serif;font-weight:800;font-style:italic;font-size:2rem;color:var(--cream);line-height:1;text-align:right}
+  .lbl{font-size:.6rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:3px}
+  .dez{font-size:.8rem;margin-top:10px;line-height:1.9;word-spacing:2px}
+  .dez b{color:var(--gold)}
+  .dez span{color:var(--muted)}
+  .dez .pfx{color:var(--muted);font-size:.62rem;letter-spacing:1px;margin-right:4px}
+  .chance{margin-top:9px;font-size:.68rem;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
+  .chance b{color:var(--gold)}
+  .jogo.done{border-left-color:var(--blue)}
+  .jogo.done .bigF{color:var(--blue)}
+
+  /* ameaças / ranking rows */
+  .row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;
+    background:var(--card2);margin:7px 0;border-left:3px solid var(--gold);cursor:pointer}
+  .row.r1{border-left-color:var(--red)}
+  .row .info{flex:1;min-width:0}
+  .row .t{font-size:.8rem;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .t .hash{color:var(--muted)}
+  .row .s{font-size:.66rem;color:var(--muted);margin-top:2px;letter-spacing:1px}
+  .row .n{font-family:'Playfair Display',serif;font-weight:800;font-style:italic;font-size:1.35rem;color:var(--gold)}
+  .row.r1 .n{color:var(--red)}
+  .rrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--card2);margin:6px 0;border-left:3px solid var(--line);cursor:pointer}
+  .rrow.top{border-left-color:var(--gold)}
+  .rrow .pos{font-family:'Playfair Display',serif;font-weight:800;font-style:italic;font-size:1rem;width:34px;text-align:center;color:var(--muted)}
+  .rrow.top .pos{color:var(--gold)}
+  .rrow .nome{flex:1;font-family:'Playfair Display',serif;font-weight:700;font-size:.95rem;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rrow .pts{font-family:'Playfair Display',serif;font-weight:800;font-style:italic;font-size:1.25rem;color:var(--gold)}
+
+  /* distribuição */
+  .dist{margin:6px 0}
+  .drow{display:flex;align-items:center;gap:8px;margin:7px 0}
+  .drow .k{font-family:'Playfair Display',serif;font-weight:800;font-size:1rem;color:var(--cream);width:26px;text-align:right}
+  .drow .c{font-size:.66rem;color:var(--muted);width:74px;white-space:nowrap}
+  .drow .bar{flex:1;height:16px;background:var(--bg2);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+  .drow .fill{height:100%;background:linear-gradient(90deg,#2b4a1f,var(--gold));border-radius:3px}
+  .drow .p{font-size:.64rem;color:var(--muted);width:44px;text-align:right}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(4,6,3,.82);display:flex;align-items:flex-start;justify-content:center;
+    padding:24px 12px;z-index:50;overflow-y:auto}
+  .modal{background:var(--card);border:1px solid var(--gold2);border-radius:12px;padding:16px;max-width:560px;width:100%;margin:auto 0}
+  .modal .mh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .modal .mh h2{font-family:'Playfair Display',serif;font-weight:800;font-size:1.25rem;color:var(--cream);margin:0}
+  .modal .mh h2 em{color:var(--blue)}
+  .modal .x{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--bg2);color:var(--txt);
+    font-size:1rem;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;margin:0;flex:none}
+  .modal .mc{font-size:.64rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin:8px 0 2px}
+
+  .appbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:8px;
+    padding:calc(8px + env(safe-area-inset-top)) 12px 8px;margin:0 -12px 4px;
+    background:rgba(10,14,8,.94);border-bottom:1px solid var(--line)}
+  .appbar .conc{font-size:.58rem;font-weight:700;letter-spacing:1px;color:#231d07;background:var(--gold);
+    padding:5px 10px;border-radius:99px;white-space:nowrap}
+  .appbar .who{flex:1;font-size:.6rem;color:var(--muted);letter-spacing:1px;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap;text-align:right}
+  .appbar .out{width:auto;margin:0;padding:7px 12px;font-size:.56rem;letter-spacing:1px}
+  .btnrow{display:flex;gap:7px;margin:12px 0 4px}
+  .btnrow button{margin:0;flex:1;padding:11px 6px;font-size:.58rem;letter-spacing:1px}
+  .gridhead{display:flex;align-items:baseline;justify-content:space-between;margin:16px 2px 8px;
+    border-top:1px solid var(--line);padding-top:14px}
+  .gridhead .gl{font-family:'Playfair Display',Georgia,serif;font-weight:700;font-size:1.05rem;color:var(--cream)}
+  @media(min-width:480px){
+    .grid{gap:7px}
+    .cell{font-size:.78rem}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Conferidor Quina</h1>
+  <p>bolão da quina · ranking ao vivo</p>
+</header>
+
+<div class="wrap">
+
+  <section id="auth" class="card hide">
+    <h3 style="font-size:1.2rem">Entrar</h3>
+    <p class="sub">Login obrigatório pra ver o bolão.</p>
+    <label>E-mail</label>
+    <input id="email" type="email" autocomplete="email" placeholder="voce@email.com" />
+    <label>Senha</label>
+    <input id="senha" type="password" autocomplete="current-password" placeholder="••••••••" />
+    <button id="btnLogin">Entrar</button>
+    <button id="btnSignup" class="ghost">Criar conta</button>
+    <div id="authMsg" class="msg"></div>
+  </section>
+
+  <section id="app" class="hide">
+    <div class="appbar">
+      <span class="conc" id="concPill" style="visibility:hidden">QUINA</span>
+      <span class="who" id="who"></span>
+      <button class="ghost out" id="btnLogout">Sair</button>
+    </div>
+
+    <div class="card">
+      <span id="m01" class="hide"></span>
+      <div id="rodadaInfo" class="sub" style="margin:0"></div>
+      <div class="btnrow">
+        <button id="btnSync" class="hide">⟳ Sincronizar</button>
+        <button id="btnReload" class="ghost hide">↻ Atualizar</button>
+        <button id="btnResumo">📷 Resumo pro WhatsApp</button>
+      </div>
+      <div style="display:flex;gap:8px" id="syncOpts" class="hide">
+        <input id="syncFrom" type="number" inputmode="numeric" placeholder="a partir do concurso (re-importa e corrige)" style="margin-top:12px;font-size:.8rem" />
+      </div>
+      <div id="syncMsg" class="msg"></div>
+      <div id="resumoMsg" class="msg"></div>
+
+      <div class="gridhead"><span class="gl">Dezenas sorteadas</span><span class="meta" id="m02"></span></div>
+      <div class="grid" id="grid"></div>
+      <div class="gridbar">
+        <button class="ghost" id="btnLimpar">Limpar simulação</button>
+      </div>
+      <p class="sub" id="simInfo"></p>
+    </div>
+
+    <div class="sec"><span class="num">03</span><h2>Sorteios da rodada</h2><span class="meta" id="m03"></span></div>
+    <div id="draws"></div>
+
+    <div class="sec"><span class="num">04</span><h2>Meus jogos</h2><span class="meta" id="m04"></span></div>
+    <div class="card">
+      <label>Seu nome (como está na cartela)</label>
+      <input id="meuNome" type="text" placeholder="ex: Rudson" />
+    </div>
+    <div id="meus"></div>
+
+    <div class="sec"><span class="num">05</span><h2>Ameaças</h2><span class="meta">≤ 3 faltam</span></div>
+    <div id="ameacas"></div>
+
+    <div class="sec"><span class="num">06</span><h2>Buscar apostante</h2><span class="meta" id="m06"></span></div>
+    <div class="card">
+      <input id="busca" type="text" placeholder="🔎 nome ou nº do jogo (ex: 691)" />
+    </div>
+    <div id="buscaRes"></div>
+
+    <div class="sec"><span class="num">07</span><h2>Ranking geral</h2><span class="meta" id="m07"></span></div>
+    <div id="rank"></div>
+    <button id="btnMaisRank" class="ghost hide">Mostrar mais</button>
+
+    <div class="sec"><span class="num">08</span><h2>Distribuição</h2><span class="meta" id="m08"></span></div>
+    <div class="card dist" id="distBox"></div>
+
+    <div id="adminWrap" class="hide">
+      <div class="sec"><span class="num">09</span><h2>Painel do admin</h2></div>
+      <div class="card">
+        <h3>Lançar sorteio manual</h3>
+        <label>Data</label>
+        <input id="dData" type="date" />
+        <label>Dezenas (espaço ou vírgula)</label>
+        <input id="dDez" type="text" inputmode="numeric" placeholder="ex: 55 63 80 65 09" />
+        <label>Concurso (opcional)</label>
+        <input id="dConc" type="number" inputmode="numeric" placeholder="ex: 7055" />
+        <button id="btnSorteio">Salvar sorteio</button>
+        <div id="admMsg" class="msg"></div>
+        <p class="sub">Dica: prefira o botão “Sincronizar sorteios” lá em cima — ele puxa direto da Caixa.</p>
+        <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+        <h3>Importar jogos do PDF</h3>
+        <p class="sub">Escolha o PDF, confira a contagem e importe. Substitui os jogos atuais.</p>
+        <label>Arquivo PDF</label>
+        <input id="pdfFile" type="file" accept="application/pdf" />
+        <button id="btnParse" class="ghost">Ler PDF</button>
+        <div id="pdfMsg" class="msg"></div>
+        <button id="btnImport" class="hide">Importar jogos pro banco</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="small">bolão da quina · bar do careca</p>
+</div>
+
+<div id="overlay" class="overlay hide">
+  <div class="modal">
+    <div class="mh">
+      <h2 id="mTitle">Apostante</h2>
+      <button class="x" id="mClose">✕</button>
+    </div>
+    <div class="mc" id="mCount"></div>
+    <div id="mBody"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+const SUPABASE_URL = "https://gqarhgiiubghrqdxxdqs.supabase.co";
+const SUPABASE_KEY = "sb_publishable_SLUz7yQWRScI55RrHt8ObA_rjZ4H-B3";
+const API = "https://loteriascaixa-api.herokuapp.com/api/quina";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false,
+          lock: async (name, acquireTimeout, fn) => await fn() }
+});
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+}
+const $ = (id) => document.getElementById(id);
+if (typeof supabase === "undefined") {
+  document.body.innerHTML = '<div style="color:#f4eeda;text-align:center;padding:40px;font-family:sans-serif">Não consegui carregar a biblioteca (rede/CDN bloqueado?).<br>Tente recarregar a página.</div>';
+  throw new Error("supabase lib nao carregou");
+}
+const show = (el,on)=> el.classList.toggle('hide', !on);
+const esc = (s)=> (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pad2 = (n)=> String(n).padStart(2,'0');
+const norm = (s)=> (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim();
+
+let SORTEIOS = [];   // {data_sorteio, dezenas[], origem, concurso}
+let JOGOS = [];      // {idx, apostador, dezenas[], acertos, faltam, faltantes[]}
+let SIM = new Set(); // dezenas marcadas manualmente (simulação)
+let ADMIN = false;
+let SEM_JOGOS = false; // fallback: sem permissão de ler jogos
+let RANK_LIMIT = 20;
+let PARSED = [];
+
+/* ---------- auth ---------- */
+function readStoredSession(){
+  try{
+    for(const k of Object.keys(localStorage)){
+      if(k.indexOf('sb-')===0 && k.indexOf('-auth-token')>0){
+        const raw=localStorage.getItem(k); if(!raw) continue;
+        let v; try{ v=JSON.parse(raw); }catch(_){ continue; }
+        const s=(v&&v.access_token)?v:((v&&v.currentSession)?v.currentSession:((v&&v.session)?v.session:null));
+        if(s&&s.access_token&&s.user) return s;
+      }
+    }
+  }catch(_){}
+  return null;
+}
+async function refreshUI(){
+  let session = null;
+  try {
+    const res = await Promise.race([
+      sb.auth.getSession(),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3500))
+    ]);
+    session = res && res.data ? res.data.session : null;
+  } catch (e) {
+    console.warn('refreshUI: getSession lento; usando sessao salva', e);
+    session = null;
+  }
+  // Lentidao do getSession NAO pode deslogar: se ha sessao salva valida, mantem logado.
+  if(!session){ const st=readStoredSession(); if(st) session=st; }
+  show($('auth'), !session);
+  show($('app'),  !!session);
+  if(session){
+    $('who').textContent = session.user.email;
+    ADMIN = false;
+    try{ const {data}= await sb.rpc('is_admin'); ADMIN=!!data; }catch(e){}
+    show($('adminWrap'), ADMIN);
+    show($('btnSync'), ADMIN);
+    show($('btnReload'), ADMIN);
+    show($('syncOpts'), ADMIN);
+    loadAll();
+  }
+}
+$('btnLogin').onclick = async ()=>{
+  const m=$('authMsg'); m.className='msg'; m.textContent='Entrando...';
+  const { error } = await sb.auth.signInWithPassword({ email:$('email').value.trim(), password:$('senha').value });
+  if(error){ m.className='msg err'; m.textContent=error.message; return; }
+  refreshUI();
+};
+$('btnSignup').onclick = async ()=>{
+  const m=$('authMsg'); m.className='msg'; m.textContent='Criando conta...';
+  const { error } = await sb.auth.signUp({ email:$('email').value.trim(), password:$('senha').value });
+  if(error){ m.className='msg err'; m.textContent=error.message; return; }
+  m.className='msg ok'; m.textContent='Conta criada! Se pedir confirmação de e-mail, confirme e entre.';
+};
+$('btnLogout').onclick = async ()=>{ sb.auth.signOut().catch(function(){}); setTimeout(refreshUI,300); };
+
+/* ---------- dados ---------- */
+async function loadAll(){
+  $('rodadaInfo').textContent = 'carregando...';
+  try{
+    const [st, jg] = await Promise.all([loadSorteios(), loadJogos()]);
+    SORTEIOS = st; JOGOS = jg;
+  }catch(e){
+    $('rodadaInfo').textContent = 'Erro carregando dados: ' + e.message;
+    return;
+  }
+  compute(); renderAll();
+}
+async function loadSorteios(){
+  const { data, error } = await sb.from('sorteios')
+    .select('data_sorteio,dezenas,origem,concurso')
+    .order('data_sorteio',{ascending:false}).limit(200);
+  if(error) throw error;
+  return data||[];
+}
+async function loadJogos(){
+  let all=[], from=0;
+  while(true){
+    const { data, error } = await sb.from('jogos').select('id,apostador,dezenas').order('id').range(from, from+999);
+    if(error){ SEM_JOGOS = true; return []; }
+    all = all.concat(data||[]);
+    if(!data || data.length<1000) break;
+    from += 1000;
+  }
+  SEM_JOGOS = (all.length===0);
+  return all.map((j,i)=>({ idx:i+1, apostador:j.apostador, dezenas:(j.dezenas||[]).slice().sort((a,b)=>a-b) }));
+}
+
+/* ---------- cálculo ---------- */
+function drawnSet(){
+  const s = new Set();
+  SORTEIOS.forEach(d=> (d.dezenas||[]).forEach(n=> s.add(Number(n))));
+  return s;
+}
+function compute(){
+  const db = drawnSet();
+  const all = new Set(db);
+  SIM.forEach(n=> all.add(n));
+  JOGOS.forEach(j=>{
+    j.hits = j.dezenas.filter(n=> all.has(n));
+    j.acertos = j.hits.length;
+    j.faltam = 15 - j.acertos;
+    j.faltantes = j.dezenas.filter(n=> !all.has(n));
+  });
+}
+function fmtBR(n){ return n.toLocaleString('pt-BR'); }
+function chanceHtml(f){
+  if(f===0) return '<b>FECHOU os 15!</b> 🏆';
+  if(f>5) return 'Precisa de pelo menos '+Math.ceil(f/5)+' sorteios pra fechar.';
+  // P(as f dezenas que faltam saírem todas no próximo sorteio de 5)
+  // = C(80-f, 5-f) / C(80,5)
+  const C=(n,k)=>{ let r=1; for(let i=0;i<k;i++) r=r*(n-i)/(i+1); return r; };
+  const p = C(80-f,5-f)/C(80,5);
+  const pct = p*100;
+  const pctStr = pct < 0.001 ? pct.toExponential(2).replace('.',',').replace('e','e') : pct.toFixed(4).replace('.',',');
+  return 'Chance no próximo sorteio: <b>'+pctStr+'%</b> (1 em '+fmtBR(Math.round(1/p))+')';
+}
+function fmtData(d){ if(!d) return ''; const a=String(d).split('-'); return a.length===3 ? a[2]+'/'+a[1] : d; }
+
+/* ---------- render ---------- */
+function renderAll(){
+  renderRodada(); renderGrid(); renderDraws(); renderMeus(); renderAmeacas(); renderBusca(); renderRank(); renderDist();
+}
+function renderRodada(){
+  const nj = JOGOS.length, ns = SORTEIOS.length;
+  const last = SORTEIOS[0];
+  $('m01').textContent = ns + (ns===1?' sorteio':' sorteios');
+  const pill=$('concPill');
+  if(pill){
+    pill.textContent = last ? ('QUINA · '+(last.concurso?'#'+last.concurso:'—')+' · '+fmtData(last.data_sorteio)) : 'QUINA';
+    pill.style.visibility='visible';
+  }
+  let t = '';
+  if(SEM_JOGOS) t += '⚠️ Não consegui ler os jogos (permissão do banco). Peça pro admin liberar a leitura.<br>';
+  t += '<b style="color:var(--cream)">'+fmtBR(nj)+'</b> jogos · <b style="color:var(--gold)">'+ns+'</b> '+(ns===1?'sorteio':'sorteios');
+  if(!last) t += ' · nenhum sorteio ainda';
+  $('rodadaInfo').innerHTML = t;
+}
+function renderGrid(){
+  const db = drawnSet();
+  const g = $('grid');
+  let html='';
+  for(let n=1;n<=80;n++){
+    const cls = db.has(n) ? 'cell on' : (SIM.has(n) ? 'cell sim' : 'cell');
+    html += '<div class="'+cls+'" data-n="'+n+'">'+pad2(n)+'</div>';
+  }
+  g.innerHTML = html;
+  $('m02').textContent = (db.size + SIM.size) + ' / 80';
+  $('simInfo').textContent = SIM.size
+    ? 'Simulação: +'+SIM.size+' dezena(s) marcada(s) à mão — acertos e ameaças recalculados. Nada foi salvo.'
+    : 'Toque num número pra simular “e se essa dezena sair?”';
+  g.querySelectorAll('.cell').forEach(c=>{
+    c.onclick = ()=>{
+      const n = Number(c.dataset.n);
+      if(db.has(n)) return;
+      SIM.has(n) ? SIM.delete(n) : SIM.add(n);
+      compute(); renderAll();
+    };
+  });
+}
+$('btnLimpar').onclick = ()=>{ SIM.clear(); compute(); renderAll(); };
+
+function renderDraws(){
+  const box=$('draws');
+  $('m03').textContent = SORTEIOS.length ? SORTEIOS.length+' concursos' : '';
+  if(!SORTEIOS.length){ box.innerHTML='<div class="card"><p class="sub" style="margin:0">Nenhum sorteio lançado ainda.'+(ADMIN?' Use “Sincronizar sorteios”.':'')+'</p></div>'; return; }
+  box.innerHTML = SORTEIOS.slice(0,30).map(function(d){
+    var balls = (d.dezenas||[]).map(function(n){ return '<span class="ball">'+pad2(n)+'</span>'; }).join('');
+    var del = ADMIN ? '<button class="del" data-d="'+esc(d.data_sorteio)+'" title="apagar este sorteio">✕</button>' : '';
+    return '<div class="draw"><span class="dt">'+(d.concurso?'#'+d.concurso:fmtData(d.data_sorteio))+'</span>'+balls+'<span class="pill">'+esc(d.origem||'')+' · '+fmtData(d.data_sorteio)+'</span>'+del+'</div>';
+  }).join('');
+  box.querySelectorAll('.del').forEach(function(b){
+    b.onclick = async function(){
+      var dt = b.dataset.d;
+      if(!confirm('Apagar o sorteio de '+fmtData(dt)+'? A pontuação recalcula na hora.')) return;
+      b.disabled = true;
+      const { data, error } = await sb.from('sorteios').delete().eq('data_sorteio', dt).select();
+      if(error || !data || !data.length){
+        alert('Não consegui apagar'+(error?': '+error.message:' (sem permissão de exclusão no banco — me peça o SQL que libera).'));
+        b.disabled = false; return;
+      }
+      loadAll();
+    };
+  });
+}
+
+function jogoCard(j){
+  const dez = j.dezenas.map(n=> (j.hits.indexOf(n)>=0 ? '<b>'+pad2(n)+'</b>' : '<span>'+pad2(n)+'</span>')).join(' ');
+  return '<div class="jogo'+(j.faltam===0?' done':'')+'">'+
+    '<div class="l1"><span class="nm">'+esc(j.apostador)+'</span><span class="idx">#'+j.idx+'</span></div>'+
+    '<div class="l2">'+
+      '<div><div class="bigA">'+j.acertos+'<small>/15</small></div><div class="lbl">acertos</div></div>'+
+      '<div><div class="bigF">'+j.faltam+'</div><div class="lbl" style="text-align:right">faltam</div></div>'+
+    '</div>'+
+    '<div class="dez"><span class="pfx">DEZ</span>'+dez+'</div>'+
+    '<div class="chance">'+chanceHtml(j.faltam)+'</div>'+
+  '</div>';
+}
+
+function renderMeus(){
+  const q = norm($('meuNome').value);
+  const box = $('meus');
+  if(!q){ $('m04').textContent=''; box.innerHTML='<p class="sub" style="margin:6px 2px">Digite seu nome pra ver suas cartelas.</p>'; return; }
+  const meus = JOGOS.filter(j=> norm(j.apostador).indexOf(q)>=0).slice(0,30);
+  $('m04').textContent = meus.length ? meus.length+' jogo(s)' : '';
+  box.innerHTML = meus.length ? meus.map(jogoCard).join('')
+    : '<p class="sub" style="margin:6px 2px">Nenhum jogo com esse nome.</p>';
+}
+let meuTimer;
+$('meuNome').value = localStorage.getItem('meuNome') || '';
+$('meuNome').oninput = ()=>{ localStorage.setItem('meuNome', $('meuNome').value); clearTimeout(meuTimer); meuTimer=setTimeout(renderMeus,250); };
+
+function renderAmeacas(){
+  const box=$('ameacas');
+  const list = JOGOS.filter(j=> j.faltam<=3).sort((a,b)=> a.faltam-b.faltam || norm(a.apostador).localeCompare(norm(b.apostador))).slice(0,60);
+  if(!list.length){
+    const min = JOGOS.length ? Math.min.apply(null, JOGOS.map(j=>j.faltam)) : null;
+    box.innerHTML = '<div class="card"><p class="sub" style="margin:0">Ninguém com 3 ou menos faltando ainda'+(min!==null?' — o mais perto tem '+min+' faltando':'')+'.</p></div>';
+    return;
+  }
+  box.innerHTML = list.map(function(j){
+    return '<div class="row'+(j.faltam===1?' r1':'')+'" data-idx="'+j.idx+'">'+
+      '<div class="info"><div class="t"><span class="hash">#'+j.idx+'</span> '+esc(j.apostador)+'</div>'+
+      '<div class="s">'+j.faltantes.map(pad2).join(' · ')+'</div></div>'+
+      '<span class="n">'+j.faltam+'</span></div>';
+  }).join('');
+  box.querySelectorAll('.row').forEach(r=>{ r.onclick=()=> openJogo(Number(r.dataset.idx)); });
+}
+
+function renderBusca(){
+  const raw = ($('busca').value||'').trim();
+  const box = $('buscaRes');
+  if(!raw){ box.innerHTML=''; $('m06').textContent=''; return; }
+  let list;
+  if(/^#?\d+$/.test(raw)){
+    const n = Number(raw.replace('#',''));
+    list = JOGOS.filter(j=> j.idx===n);
+  } else {
+    const q = norm(raw);
+    list = JOGOS.filter(j=> norm(j.apostador).indexOf(q)>=0).slice(0,20);
+  }
+  $('m06').textContent = list.length+' encontrado(s)';
+  box.innerHTML = list.length ? list.map(jogoCard).join('') : '<p class="sub" style="margin:6px 2px">Nada encontrado.</p>';
+}
+let buscaTimer;
+$('busca').oninput = ()=>{ clearTimeout(buscaTimer); buscaTimer=setTimeout(renderBusca,250); };
+
+function rankData(){
+  return JOGOS.slice().sort((a,b)=> b.acertos-a.acertos || norm(a.apostador).localeCompare(norm(b.apostador)));
+}
+function renderRank(){
+  const box=$('rank');
+  $('m07').textContent = fmtBR(JOGOS.length)+' jogos';
+  if(!JOGOS.length){ box.innerHTML='<div class="card"><p class="sub" style="margin:0">'+(SEM_JOGOS?'Sem acesso aos jogos — admin precisa liberar leitura.':'Nenhum jogo importado ainda.')+'</p></div>'; return; }
+  const data = rankData();
+  let html='', lastPts=null, lastPos=0;
+  data.slice(0,RANK_LIMIT).forEach(function(j,i){
+    const pos = (j.acertos===lastPts) ? lastPos : (i+1);
+    lastPts=j.acertos; lastPos=pos;
+    html += '<div class="rrow'+(pos<=3?' top':'')+'" data-idx="'+j.idx+'">'+
+      '<span class="pos">'+pos+'º</span>'+
+      '<span class="nome">'+esc(j.apostador)+'</span>'+
+      '<span class="pts">'+j.acertos+'</span></div>';
+  });
+  box.innerHTML = html;
+  box.querySelectorAll('.rrow').forEach(r=>{ r.onclick=()=> openJogo(Number(r.dataset.idx)); });
+  show($('btnMaisRank'), data.length>RANK_LIMIT);
+}
+$('btnMaisRank').onclick = ()=>{ RANK_LIMIT += 50; renderRank(); };
+
+function renderDist(){
+  const box=$('distBox');
+  $('m08').textContent = fmtBR(JOGOS.length)+' jogos';
+  if(!JOGOS.length){ box.innerHTML='<p class="sub" style="margin:0">Sem dados.</p>'; return; }
+  const cnt = {};
+  JOGOS.forEach(j=>{ cnt[j.acertos]=(cnt[j.acertos]||0)+1; });
+  const keys = Object.keys(cnt).map(Number).sort((a,b)=>b-a);
+  const max = Math.max.apply(null, keys.map(k=>cnt[k]));
+  box.innerHTML = keys.map(function(k){
+    const c=cnt[k], pct=(c/JOGOS.length*100);
+    return '<div class="drow"><span class="k">'+k+'</span><span class="c">'+fmtBR(c)+' jogo'+(c>1?'s':'')+'</span>'+
+      '<div class="bar"><div class="fill" style="width:'+Math.max(2,(c/max*100))+'%"></div></div>'+
+      '<span class="p">'+pct.toFixed(1).replace('.',',')+'%</span></div>';
+  }).join('');
+}
+
+/* ---------- modal ---------- */
+function openJogo(idx){
+  const j = JOGOS.find(x=>x.idx===idx);
+  if(!j) return;
+  const mesmos = JOGOS.filter(x=> norm(x.apostador)===norm(j.apostador));
+  $('mTitle').innerHTML = 'Apostante <em>#'+j.idx+'</em>';
+  $('mCount').textContent = mesmos.length+' jogo(s) encontrado(s)';
+  $('mBody').innerHTML = mesmos.map(jogoCard).join('');
+  show($('overlay'), true);
+  document.body.style.overflow='hidden';
+}
+$('mClose').onclick = ()=>{ show($('overlay'),false); document.body.style.overflow=''; };
+$('overlay').onclick = (e)=>{ if(e.target===$('overlay')){ show($('overlay'),false); document.body.style.overflow=''; } };
+
+/* ---------- sincronizar via API ---------- */
+async function fetchJson(url){
+  const r = await fetch(url, {headers:{'Accept':'application/json'}});
+  if(!r.ok) throw new Error('API respondeu '+r.status);
+  return r.json();
+}
+function brToIso(d){ const a=(d||'').split('/'); return a.length===3 ? a[2]+'-'+a[1]+'-'+a[0] : null; }
+$('btnSync').onclick = async ()=>{
+  const m=$('syncMsg'); m.className='msg'; m.textContent='Buscando último concurso na Caixa...';
+  $('btnSync').disabled=true;
+  try{
+    let latest;
+    try{ latest = await fetchJson(API+'/latest'); }
+    catch(e){
+      const cx = await fetchJson('https://servicebus2.caixa.gov.br/portaldeloterias/api/quina');
+      latest = { concurso: cx.numero || cx.numeroConcursoAnterior+1, data: cx.dataApuracao, dezenas: cx.listaDezenas };
+    }
+    const have = {};
+    SORTEIOS.forEach(s=>{ if(s.concurso) have[s.concurso]=true; });
+    const fromInput = Number($('syncFrom').value)||0;
+    let start;
+    if(fromInput) start = fromInput;
+    else if(Object.keys(have).length) start = Math.max.apply(null, Object.keys(have).map(Number))+1;
+    else start = latest.concurso;
+    const force = !!fromInput; // com concurso inicial informado, re-importa e CORRIGE os já lançados
+    const alvo=[];
+    for(let c=start;c<=latest.concurso;c++) if(force || !have[c]) alvo.push(c);
+    if(!alvo.length){ m.className='msg ok'; m.textContent='Já está tudo em dia (último: #'+latest.concurso+').'; $('btnSync').disabled=false; return; }
+    if(alvo.length>60){ m.className='msg err'; m.textContent='São '+alvo.length+' concursos — muito de uma vez. Informe um concurso inicial mais recente.'; $('btnSync').disabled=false; return; }
+    let ok=0;
+    for(const c of alvo){
+      m.textContent = 'Importando concurso #'+c+' ('+(ok+1)+'/'+alvo.length+')...';
+      const d = (c===latest.concurso && latest.dezenas) ? latest : await fetchJson(API+'/'+c);
+      const iso = brToIso(d.data);
+      const dez = (d.dezenas||[]).map(Number);
+      if(!iso || dez.length!==5) throw new Error('concurso #'+c+' veio incompleto da API');
+      const { error } = await sb.rpc('upsert_sorteio',{ p_data:iso, p_dezenas:dez, p_origem:'api', p_concurso:c });
+      if(error) throw error;
+      ok++;
+    }
+    m.className='msg ok'; m.textContent='✓ '+ok+' sorteio(s) importado(s). Recarregando...';
+    $('syncFrom').value='';
+    await loadAll();
+  }catch(e){
+    m.className='msg err'; m.textContent='Falhou: '+e.message;
+  }
+  $('btnSync').disabled=false;
+};
+$('btnReload').onclick = ()=> loadAll();
+
+/* ---------- admin: sorteio manual ---------- */
+$('btnSorteio').onclick = async ()=>{
+  const m=$('admMsg'); m.className='msg';
+  const data=$('dData').value;
+  const dez=($('dDez').value.match(/\d+/g)||[]).map(Number);
+  const conc=$('dConc').value ? Number($('dConc').value) : null;
+  if(!data || dez.length===0){ m.className='msg err'; m.textContent='Informe data e dezenas.'; return; }
+  m.textContent='Salvando...';
+  const { error } = await sb.rpc('upsert_sorteio',{ p_data:data, p_dezenas:dez, p_origem:'manual', p_concurso:conc });
+  if(error){ m.className='msg err'; m.textContent='Falhou (você é admin?): '+error.message; return; }
+  m.className='msg ok'; m.textContent='Sorteio salvo!';
+  loadAll();
+};
+
+/* ---------- admin: importar PDF ---------- */
+$('btnParse').onclick = async ()=>{
+  const m=$('pdfMsg'); m.className='msg';
+  const f=$('pdfFile').files[0];
+  if(!f){ m.className='msg err'; m.textContent='Escolha um PDF primeiro.'; return; }
+  if(!window.pdfjsLib){ m.className='msg err'; m.textContent='Leitor de PDF não carregou. Recarregue a página.'; return; }
+  m.textContent='Lendo PDF...';
+  try{
+    PARSED = await parsePdf(f);
+    if(!PARSED.length){ m.className='msg err'; m.textContent='Não encontrei jogos nesse PDF. Formato diferente?'; show($('btnImport'),false); return; }
+    m.className='msg ok';
+    m.textContent='✓ '+PARSED.length+' jogos lidos. Confira o número e clique em importar.';
+    $('btnImport').textContent='Importar '+PARSED.length+' jogos pro banco';
+    show($('btnImport'),true);
+  }catch(e){ m.className='msg err'; m.textContent='Erro lendo PDF: '+e.message; }
+};
+$('btnImport').onclick = async ()=>{
+  const m=$('pdfMsg');
+  if(!PARSED.length) return;
+  if(!confirm('Isso vai SUBSTITUIR os jogos atuais por '+PARSED.length+' novos. Continuar?')) return;
+  $('btnImport').disabled=true; m.className='msg'; m.textContent='Importando...';
+  try{
+    await importJogos(PARSED, (done,total)=>{ m.textContent='Importando... '+done+'/'+total; });
+    m.className='msg ok'; m.textContent='✓ '+PARSED.length+' jogos importados!';
+    show($('btnImport'),false); PARSED=[]; $('pdfFile').value='';
+    loadAll();
+  }catch(e){ m.className='msg err'; m.textContent='Falhou (você é admin?): '+e.message; }
+  $('btnImport').disabled=false;
+};
+async function parsePdf(file){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data:buf}).promise;
+  const jogos=[];
+  for(let p=1;p<=pdf.numPages;p++){
+    const page=await pdf.getPage(p);
+    const tc=await page.getTextContent();
+    const lines={};
+    tc.items.forEach(it=>{
+      if(!it.str || !it.str.trim()) return;
+      const y=Math.round(it.transform[5]);
+      (lines[y]=lines[y]||[]).push({x:it.transform[4], s:it.str});
+    });
+    Object.values(lines).forEach(items=>{
+      const parts=items.sort((a,b)=>a.x-b.x).map(o=>o.s).join(' ');
+      const toks=parts.split(/\s+/).filter(Boolean);
+      if(toks.length<18 || !/^\d+$/.test(toks[0])) return;
+      const tail=toks.slice(-15);
+      if(!tail.every(t=>/^\d+$/.test(t))) return;
+      const dez=tail.map(Number);
+      if(dez.some(d=>d<1||d>80)) return;
+      if(new Set(dez).size!==15) return;
+      if(!/^\d+$/.test(toks[toks.length-16])) return;
+      const nome=toks.slice(1,toks.length-16).join(' ').trim();
+      if(!nome) return;
+      jogos.push({nome, dez});
+    });
+  }
+  return jogos;
+}
+async function importJogos(jogos, onProgress){
+  const NOME_RODADA='JOGO BAR DO CARECA';
+  const { data:old } = await sb.from('rodadas').select('id').eq('nome',NOME_RODADA);
+  if(old && old.length){
+    const ids=old.map(r=>r.id);
+    await sb.from('jogos').delete().in('rodada_id',ids);
+    await sb.from('rodadas').delete().in('id',ids);
+  }
+  const { data:rod, error:e1 } = await sb.from('rodadas').insert({nome:NOME_RODADA, arquivo_pdf:'upload-app'}).select('id').single();
+  if(e1) throw e1;
+  const rows = jogos.map(j=>({rodada_id:rod.id, apostador:j.nome, dezenas:j.dez}));
+  const CH=300;
+  for(let i=0;i<rows.length;i+=CH){
+    const { error } = await sb.from('jogos').insert(rows.slice(i,i+CH));
+    if(error) throw error;
+    if(onProgress) onProgress(Math.min(i+CH,rows.length), rows.length);
+  }
+}
+
+/* ---------- gerar resumo PNG pro WhatsApp ---------- */
+function _rrect(ctx,x,y,w,h,r){ctx.beginPath();if(ctx.roundRect){ctx.roundRect(x,y,w,h,r);}else{ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}}
+async function gerarResumoPNG(){
+  const msg=$('resumoMsg');
+  if(!SORTEIOS.length){ if(msg){msg.className='msg err';msg.textContent='Nenhum sorteio lançado ainda.';} return; }
+  if(!JOGOS.length){ if(msg){msg.className='msg err';msg.textContent='Nenhum jogo carregado ainda.';} return; }
+  if(msg){msg.className='msg';msg.textContent='Gerando imagem...';}
+  try{ if(document.fonts&&document.fonts.ready) await document.fonts.ready; }catch(_){}
+  const P={bg:'#0a0e08',card:'#12180f',card2:'#161d11',line:'#2b3420',gold:'#e8be3a',cream:'#f4eeda',muted:'#8a9a6a',dark:'#0a0e08',green:'#9cc86e'};
+  const W=1080;
+  const rk=[...JOGOS].sort((a,b)=>b.acertos-a.acertos);
+  const ns=SORTEIOS.length, dz=drawnSet().size, last=SORTEIOS[0];
+  const minA=rk[rk.length-1].acertos;
+  const tiers=[];const seen=new Set();for(const j of rk){if(!seen.has(j.acertos)){seen.add(j.acertos);tiers.push(j.acertos);}if(tiers.length>=3)break;}
+  const leadersOf=(a)=>rk.filter(j=>j.acertos===a).map(j=>j.apostador);
+  const cons=leadersOf(minA);
+  const consRows=Math.ceil(Math.min(cons.length,8)/2);
+  const H=1120+tiers.length*140+consRows*40;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d');
+  ctx.fillStyle=P.bg;ctx.fillRect(0,0,W,H);
+  const M=48;
+  const rr=(x,y,w,h,r,fill,stroke)=>{_rrect(ctx,x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();}};
+  const tC=(t,cx,yy,f,c)=>{ctx.font=f;ctx.fillStyle=c;ctx.textAlign='center';ctx.fillText(t,cx,yy);ctx.textAlign='left';};
+  const tL=(t,x,yy,f,c)=>{ctx.font=f;ctx.fillStyle=c;ctx.textAlign='left';ctx.fillText(t,x,yy);};
+  ctx.fillStyle=P.card;ctx.fillRect(0,0,W,250);ctx.fillStyle=P.gold;ctx.fillRect(0,250,W,4);
+  tL('Conferidor Quina',M,100,'700 52px "Playfair Display",Georgia,serif',P.cream);
+  tL('BOLÃO DA QUINA · BAR DO CARECA',M,150,'600 22px "DM Mono",monospace',P.gold);
+  tL('Atualizado em '+new Date().toLocaleDateString('pt-BR'),M,200,'400 24px system-ui,sans-serif',P.muted);
+  let y=300;
+  rr(M,y,W-2*M,300,24,P.card,P.line);
+  tL('ÚLTIMO SORTEIO',M+34,y+50,'600 22px "DM Mono",monospace',P.muted);
+  tL(last.concurso?'Concurso '+last.concurso:'Sorteio',M+32,y+102,'700 40px "Playfair Display",Georgia,serif',P.cream);
+  tL(fmtData(last.data_sorteio),M+34,y+142,'400 26px system-ui,sans-serif',P.muted);
+  let bx=M+34,by=y+180,bs=92;
+  (last.dezenas||[]).forEach(n=>{ctx.beginPath();ctx.fillStyle=P.gold;ctx.arc(bx+bs/2,by+bs/2,bs/2,0,7);ctx.fill();tC(pad2(n),bx+bs/2,by+bs/2+14,'700 38px system-ui,sans-serif',P.dark);bx+=bs+22;});
+  y+=324;
+  const cw=(W-2*M-24)/2;
+  rr(M,y,cw,150,20,P.card,P.line);tC(String(ns),M+cw/2,y+82,'700 64px "Playfair Display",Georgia,serif',P.gold);tC('SORTEIOS',M+cw/2,y+122,'600 20px "DM Mono",monospace',P.muted);
+  rr(M+cw+24,y,cw,150,20,P.card,P.line);tC(String(dz),M+cw+24+cw/2,y+82,'700 64px "Playfair Display",Georgia,serif',P.gold);tC('DEZENAS / 80',M+cw+24+cw/2,y+122,'600 20px "DM Mono",monospace',P.muted);
+  y+=174;
+  rr(M,y,W-2*M,60+tiers.length*140,24,P.card,P.line);
+  tL('RANKING — QUEM ESTÁ NA FRENTE',M+34,y+46,'600 24px "DM Mono",monospace',P.gold);
+  let ry=y+86;const mcs=[P.gold,'#9aa06a','#8a6f43'];
+  tiers.forEach((a,i)=>{rr(M+28,ry,W-2*M-56,120,16,P.card2,P.line);ctx.beginPath();ctx.fillStyle=mcs[i]||P.card2;ctx.arc(M+28+44,ry+60,30,0,7);ctx.fill();tC(String(a),M+28+44,ry+72,'700 30px system-ui',P.dark);tL(a+' acertos',M+120,ry+50,'700 30px system-ui,sans-serif',P.cream);let names=leadersOf(a);let s=names.slice(0,4).join(' · ');if(names.length>4)s+=' +'+(names.length-4);ctx.font='400 26px system-ui,sans-serif';while(ctx.measureText(s).width>W-2*M-230&&s.length>3){s=s.slice(0,-1);}tL(s,M+120,ry+92,'400 26px system-ui,sans-serif',P.muted);ry+=140;});
+  y+=60+tiers.length*140+24;
+  rr(M,y,W-2*M,90+consRows*40,24,P.card,P.line);
+  tL('DISPUTA DA CONSOLAÇÃO — MENOS PONTOS',M+34,y+44,'600 20px "DM Mono",monospace',P.green);
+  tL(cons.length+' jogador(es) com '+minA+' ponto(s)',M+34,y+78,'400 24px system-ui,sans-serif',P.muted);
+  cons.slice(0,8).forEach((nm,i)=>{const col=i%2,row=Math.floor(i/2);tL('• '+nm,M+40+col*((W-2*M)/2),y+118+row*40,'400 24px system-ui,sans-serif',P.cream);});
+  y+=90+consRows*40+20;
+  tL(fmtBR(JOGOS.length)+' jogos na rodada · gerado pelo Conferidor Quina',M,y+10,'400 20px system-ui,sans-serif',P.muted);
+  const dstr=new Date().toISOString().slice(0,10).split('-').reverse().join('');
+  cv.toBlob(function(blob){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='resumo-quina-'+dstr+'.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);if(msg){msg.className='msg ok';msg.textContent='✓ Imagem gerada e baixada! Agora é só postar no grupo.';}},'image/png');
+}
+$('btnResumo').onclick=()=>{ gerarResumoPNG().catch(function(e){ const m=$('resumoMsg'); if(m){m.className='msg err';m.textContent='Erro ao gerar: '+e.message;} }); };
+
+/* ---------- boot ---------- */
+sb.auth.onAuthStateChange(()=>refreshUI());
+refreshUI();
+// AUTO-CURA: remove qualquer service worker preso e limpa caches velhos
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});}).catch(function(){});
+  if(window.caches){ caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});}).catch(function(){}); }
+}
+</script>
+</body>
+</html>
