@@ -300,7 +300,13 @@ function readStoredSession(){
   try{
     for(const k of Object.keys(localStorage)){
       if(k.indexOf('sb-')===0 && k.indexOf('-auth-token')>0){
-        const raw=localStorage.getItem(k); if(!raw) continue;
+        let raw=localStorage.getItem(k); if(!raw) continue;
+        // supabase-js novo guarda como "base64-<json em base64>"
+        if(raw.indexOf('base64-')===0){
+          const b=raw.slice(7);
+          try{ raw=decodeURIComponent(escape(atob(b))); }
+          catch(_){ try{ raw=atob(b); }catch(__){ continue; } }
+        }
         let v; try{ v=JSON.parse(raw); }catch(_){ continue; }
         const s=(v&&v.access_token)?v:((v&&v.currentSession)?v.currentSession:((v&&v.session)?v.session:null));
         if(s&&s.access_token&&s.user) return s;
@@ -309,19 +315,22 @@ function readStoredSession(){
   }catch(_){}
   return null;
 }
-async function refreshUI(){
-  let session = null;
-  try {
-    const res = await Promise.race([
-      sb.auth.getSession(),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3500))
-    ]);
-    session = res && res.data ? res.data.session : null;
-  } catch (e) {
-    console.warn('refreshUI: getSession lento; usando sessao salva', e);
-    session = null;
+async function refreshUI(preSession){
+  // 1) Se ja recebemos a sessao pronta (login ou onAuthStateChange), usa ela. Sem perguntar nada.
+  let session = preSession || null;
+  if(!session){
+    try {
+      const res = await Promise.race([
+        sb.auth.getSession(),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3500))
+      ]);
+      session = res && res.data ? res.data.session : null;
+    } catch (e) {
+      console.warn('refreshUI: getSession lento; usando sessao salva', e);
+      session = null;
+    }
   }
-  // Lentidao do getSession NAO pode deslogar: se ha sessao salva valida, mantem logado.
+  // 2) Ultimo recurso: le a sessao salva no navegador. Lentidao NAO desloga.
   if(!session){ const st=readStoredSession(); if(st) session=st; }
   show($('auth'), !session);
   show($('app'),  !!session);
@@ -338,9 +347,11 @@ async function refreshUI(){
 }
 $('btnLogin').onclick = async ()=>{
   const m=$('authMsg'); m.className='msg'; m.textContent='Entrando...';
-  const { error } = await sb.auth.signInWithPassword({ email:$('email').value.trim(), password:$('senha').value });
+  const { data, error } = await sb.auth.signInWithPassword({ email:$('email').value.trim(), password:$('senha').value });
   if(error){ m.className='msg err'; m.textContent=error.message; return; }
-  refreshUI();
+  m.className='msg ok'; m.textContent='Entrou! Carregando...';
+  // Usa a sessao devolvida pelo proprio login. Nao depende do getSession.
+  refreshUI(data && data.session ? data.session : null);
 };
 $('btnSignup').onclick = async ()=>{
   const m=$('authMsg'); m.className='msg'; m.textContent='Criando conta...';
@@ -793,7 +804,7 @@ async function gerarResumoPNG(){
 $('btnResumo').onclick=()=>{ gerarResumoPNG().catch(function(e){ const m=$('resumoMsg'); if(m){m.className='msg err';m.textContent='Erro ao gerar: '+e.message;} }); };
 
 /* ---------- boot ---------- */
-sb.auth.onAuthStateChange(()=>refreshUI());
+sb.auth.onAuthStateChange((_evt, s)=>refreshUI(s||null));
 refreshUI();
 // AUTO-CURA: remove qualquer service worker preso e limpa caches velhos
 if('serviceWorker' in navigator){
